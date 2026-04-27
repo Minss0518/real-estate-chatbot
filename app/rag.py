@@ -11,9 +11,39 @@ from llama_index.llms.openai import OpenAI
 from llama_index.core.memory import ChatMemoryBuffer
 import chromadb
 from langsmith import traceable
+from openai import OpenAI as OpenAIClient
 
 CHROMA_DIR = "vectorstore/chroma_db"
 COLLECTION_NAME = "real_estate"
+
+
+def rewrite_question(question: str) -> str:
+    """사용자 질문을 법률 검색에 최적화된 표현으로 변환"""
+    client = OpenAIClient()
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "당신은 부동산 법률 전문가입니다. "
+                    "사용자의 일상적인 질문을 주택임대차보호법, 공인중개사법, 주택법 문서에서 "
+                    "잘 검색되도록 법률 용어로 변환해주세요. "
+                    "예시: '전입신고 언제까지' → '임차인 주민등록 대항력 요건' "
+                    "예시: '월세 올릴 수 있나요' → '임대료 증액 청구 한도' "
+                    "예시: '집주인이 나가라고 해요' → '임대인 임차인 계약 갱신 거절 사유' "
+                    "변환된 질문만 출력하세요. 설명은 하지 마세요."
+                            )
+            },
+            {
+                "role": "user",
+                "content": f"질문: {question}"
+            }
+        ],
+        temperature=0,
+    )
+    rewritten = response.choices[0].message.content.strip()
+    return rewritten
 
 
 def build_chat_engine():
@@ -51,7 +81,13 @@ def build_chat_engine():
 @traceable
 def chat(engine, question: str) -> str:
     """대화 엔진에 질문을 던지고 답변 문자열 반환"""
-    response = engine.chat(question)
+
+    # 질문 리라이팅
+    rewritten = rewrite_question(question)
+    print(f"🔄 원본 질문: {question}")
+    print(f"✏️  변환 질문: {rewritten}")
+
+    response = engine.chat(rewritten)
 
     answer = str(response)
 

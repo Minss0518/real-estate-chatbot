@@ -3,10 +3,10 @@ from dotenv import load_dotenv
 from llama_index.core import VectorStoreIndex, StorageContext, Settings, Document
 from llama_index.vector_stores.chroma import ChromaVectorStore
 from llama_index.embeddings.openai import OpenAIEmbedding
-from llama_index.core import Settings
 from llama_index.core.node_parser import SentenceSplitter
+from marker.converters.pdf import PdfConverter
+from marker.models import create_model_dict
 import chromadb
-from pypdf import PdfReader
 
 load_dotenv()
 
@@ -14,23 +14,28 @@ PDF_DIR = "data"
 CHROMA_DIR = "vectorstore/chroma_db"
 COLLECTION_NAME = "real_estate"
 
-def load_pdfs(pdf_dir):
+def load_pdfs_with_marker(pdf_dir):
+    print("🤖 Marker 모델 로딩 중... (시간이 걸릴 수 있어요)")
+    models = create_model_dict()
+    converter = PdfConverter(artifact_dict=models)
+
     documents = []
     for filename in os.listdir(pdf_dir):
         if filename.endswith(".pdf"):
             filepath = os.path.join(pdf_dir, filename)
-            print(f"읽는 중: {filename}")
-            reader = PdfReader(filepath)
-            text = ""
-            for page in reader.pages:
-                text += page.extract_text() or ""
-            doc = Document(text=text, metadata={"file_name": filename})
+            print(f"📄 변환 중: {filename}")
+            result = converter(filepath)
+            doc = Document(
+                text=result.markdown,
+                metadata={"file_name": filename}
+            )
             documents.append(doc)
+            print(f"   ✅ 완료: {len(result.markdown)}자 변환됨")
     return documents
 
 def main():
     print("📄 PDF 로딩 중...")
-    documents = load_pdfs(PDF_DIR)
+    documents = load_pdfs_with_marker(PDF_DIR)
     print(f"   총 {len(documents)}개 문서 로드 완료")
 
     Settings.embed_model = OpenAIEmbedding(model="text-embedding-3-small")
