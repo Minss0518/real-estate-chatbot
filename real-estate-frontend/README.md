@@ -1,16 +1,64 @@
-# React + Vite
+# 🏠 부동산 법률 챗봇
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+주택임대차보호법, 공인중개사법, 주택법 PDF를 기반으로 부동산 관련 법률 질문에 답변하는 AI 챗봇입니다.
 
-Currently, two official plugins are available:
+## 🛠 기술 스택
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Backend**: FastAPI, LlamaIndex, ChromaDB, pypdf
+- **Frontend**: React, Vite
+- **AI**: OpenAI GPT-4o-mini, text-embedding-3-small
+- **모니터링**: LangSmith
+- **평가**: RAGAS
 
-## React Compiler
+## 💡 주요 기능
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- 부동산 관련 법률 3개 PDF 통합 질의응답
+- 대화 기억 기능 (이전 대화 맥락 유지)
+- 스트리밍 답변 (글자씩 실시간 출력)
+- 참고 법령 출처 표시
+- 법률 전문가 면책 조항
+- RAGAS 품질 평가 시각화
 
-## Expanding the ESLint configuration
+## 📊 근로기준법 챗봇 대비 개선 사항
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+| 항목 | 근로기준법 챗봇 | 부동산 법률 챗봇 |
+|------|--------------|----------------|
+| 문서 수 | 1개 | 3개 |
+| PDF 읽기 | SimpleDirectoryReader | pypdf (직접 구현) |
+| 대화 기억 | ❌ | ✅ ChatMemoryBuffer |
+| 답변 방식 | 일반 응답 | ✅ 스트리밍 |
+| 출처 표시 | ❌ | ✅ 참고 법령 |
+| 면책 조항 | ❌ | ✅ |
+| 시스템 프롬프트 | ❌ | ✅ |
+| RAGAS 시각화 | ❌ | ✅ |
+
+## 🔧 문제 해결 경험
+
+- PDF가 바이너리로 저장되는 문제 → pypdf로 교체
+- ChromaDB DLL 보안 차단 → McAfee 제거로 해결
+- 질문 표현에 따른 답변 품질 차이 → 시스템 프롬프트 튜닝 및 자주 묻는 질문 법률 용어로 변경
+
+## 📊 RAGAS 품질 평가 결과 (chunk_size 1024 기준)
+
+| 질문 | 충실도 | 관련성 |
+|------|--------|--------|
+| 전세 계약 기간은 얼마나 되나요? | 1.0 | 1.0 |
+| 보증금 돌려받으려면 어떻게 해야 하나요? | 0.7 | 0.9 |
+| 임대료 증액 청구 한도는 얼마인가요? | 1.0 | 1.0 |
+| **평균** | **0.90** | **0.97** |
+
+## 🚀 실행 방법
+
+### 백엔드
+```bash
+pip install -r requirements.txt
+python ingest.py
+uvicorn app.main:app --reload
+```
+
+### 프론트엔드
+```bash
+cd labor-law-frontend
+npm install
+npm run dev
+```
