@@ -71,14 +71,13 @@
 
 ### 백엔드
 ```bash
-pip install -r requirements.txt
 python ingest.py
 uvicorn app.main:app --reload
 ```
 
 ### 프론트엔드
 ```bash
-cd labor-law-frontend
+cd real-estate-frontend
 npm install
 npm run dev
 ```
